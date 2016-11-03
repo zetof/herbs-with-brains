@@ -17,7 +17,10 @@
    width="751.925"
    height="755.5875"
    xml:space="preserve"
-   sodipodi:docname="herbs-with_brains.svg"><metadata
+   sodipodi:docname="herbs-with_brains.svg"
+   inkscape:export-filename="/home/zetof/salads-with-brains/marketting/herbs-with_brains.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90"><metadata
      id="metadata3010"><rdf:RDF><cc:Work
          rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
@@ -98,7 +101,7 @@
      objecttolerance="10"
      gridtolerance="10"
      guidetolerance="10"
-     inkscape:pageopacity="0"
+     inkscape:pageopacity="1"
      inkscape:pageshadow="2"
      inkscape:window-width="1920"
      inkscape:window-height="1028"
