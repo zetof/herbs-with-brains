@@ -1,0 +1,41 @@
+*** Install the system
+1/ Download the image from https://minibianpi.wordpress.com/
+2/ Format SD card with GParted
+3/ Install image:
+		df -h
+		sudo dd bs=1M if=<img> of=<result of the previous command>
+		sudo sync
+		*** IMPORTANT: disk size is too small, increase with GParted ***
+4/ SSH access to Raspberry: ssh root@192.168.1.20
+5/ apt-get update && apt-get upgrade
+6/ Change root password: passwd
+7/ Install python:
+	apt-get install python
+	apt-get install python-dev
+	apt-get install python-setuptools
+	apt-get install apt-transport-https
+	apt-get install python-pip
+8/ Install Raspberry python libraries:
+	pip install RPi.GPIO
+	pip install pySerial
+	pip install nose
+	pip install cmd2
+9/ Install vim: apt-get install vim
+10/ Set .vimrc file in /root directory as follows:
+  1 set number                                                                                                                                                                                                                                
+  2 set nowrap
+  3 syntax enable
+  4 set tabstop=2
+  5 set shiftwidth=2
+  6 set cursorline
+
+*** Test program
+1/ Write a test program called test.py in /root/python directory
+2/ To start this program at login: place the following line at the end of the /etc/profile file:
+	python /root/python/test.py &
+3/ To autologin at reboot, create a file called autologin.conf in the directory /etc/systemd/system/getty@tty1.service.d
+	[Service]
+	ExecStart=
+	ExecStart=-/sbin/agetty --autologin username --noclear %I 38400 linux
+4/ Activate the autologin service by entering command: systemctl enable getty@tty1.service
+
