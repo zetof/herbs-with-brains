@@ -1,4 +1,6 @@
+***
 *** Install the system
+***
 1/ Download the image from https://minibianpi.wordpress.com/
 2/ Format SD card with GParted
 3/ Install image:
@@ -15,27 +17,53 @@
 	apt-get install python-setuptools
 	apt-get install apt-transport-https
 	apt-get install python-pip
-8/ Install Raspberry python libraries:
+8/ Create a new user:
+	apt-get install sudo
+	adduser <username>
+	adduser <username> sudo
+9/ Install Raspberry python libraries:
 	pip install RPi.GPIO
 	pip install pySerial
 	pip install nose
 	pip install cmd2
-9/ Install vim: apt-get install vim
-10/ Set .vimrc file in /root directory as follows:
+10/ Install vim: apt-get install vim
+11/ Set .vimrc file in /root directory as follows:
   1 set number                                                                                                                                                                                                                                
   2 set nowrap
   3 syntax enable
   4 set tabstop=2
   5 set shiftwidth=2
   6 set cursorline
+---> OPTIONAL - Install WiFi
+12/ Install firmware, in my case TP-LINK TL-WN725N chipset:
+	apt-get install firmware-realtek
+13/ Install WPA capable identification:
+	apt-get install wpasupplicant
+14/ Modify the file /etc/network/interfaces like this:
+	allow-hotplug wlan0
+	iface wlan0 inet manual
+	wpa-roam /etc/wpa_supplicant/wpa_supplicant.conf
+	iface default inet dhcp
+15/ Modify the file /etc/wpa_supplicant/wpa_supplicant.conf like this:
+	network={
+	ssid="network_ssid"
+	psk="network_password"
+	}
+<---
 
-*** Test program
+***
+*** Start program
+***
 1/ Write a test program called test.py in /root/python directory
-2/ To start this program at login: place the following line at the end of the /etc/profile file:
+2/ To start this program as root before login, place the following line at the en of the /etc/rc.local file BEFORE the exit 0 statment:
 	python /root/python/test.py &
-3/ To autologin at reboot, create a file called autologin.conf in the directory /etc/systemd/system/getty@tty1.service.d
+---> OR
+3/ To start this program at login: place the following line at the end of the /etc/profile file:
+	python /root/python/test.py &
+4/ To autologin at reboot, create a file called autologin.conf in the directory /etc/systemd/system/getty@tty1.service.d
 	[Service]
 	ExecStart=
 	ExecStart=-/sbin/agetty --autologin username --noclear %I 38400 linux
-4/ Activate the autologin service by entering command: systemctl enable getty@tty1.service
+5/ Activate the autologin service by entering command: systemctl enable getty@tty1.service
+<---
 
