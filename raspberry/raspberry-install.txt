@@ -40,6 +40,7 @@
 13/ Install WPA capable identification:
 	apt-get install wpasupplicant
 14/ Modify the file /etc/network/interfaces like this:
+	auto wlan0
 	allow-hotplug wlan0
 	iface wlan0 inet manual
 	wpa-roam /etc/wpa_supplicant/wpa_supplicant.conf
@@ -50,6 +51,11 @@
 	psk="network_password"
 	}
 <---
+16/ Install the DNS resolution as local:
+	apt-get install avahi-daemon
+17/ Modify the name of the minibian system:
+	edit /etc/hosts file
+	edit /etc/hostname file
 
 ***
 *** Start program
