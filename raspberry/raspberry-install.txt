@@ -36,7 +36,9 @@
   6 set cursorline
 ---> OPTIONAL - Install WiFi
 12/ Install firmware, in my case TP-LINK TL-WN725N chipset:
-	apt-get install firmware-realtek
+	wget https://dl.dropboxusercontent.com/u/80256631/install-8188eu.tgz
+	tar -zxvf install-8188eu.tgz
+	./install-8188eu.sh	
 13/ Install WPA capable identification:
 	apt-get install wpasupplicant
 14/ Modify the file /etc/network/interfaces like this:
