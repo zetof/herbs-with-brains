@@ -4,9 +4,11 @@
 # Import des librairies
 import smbus
 import time
+import Adafruit_CharLCD as LCD
 import struct
 import logging
 import logging.config
+import AlarmPannel as AP
 
 # Au démarrage, on suppose que l'incrément du heartbeat est à zéro
 myHeartbeat = 0
@@ -78,10 +80,22 @@ def i2cReadFloat(bus, address, command):
 		raise
 
 
-startup()
+# startup()
+ap = AP.AlarmPannel(8, 7, 11, 9, 600, True);
+lcd = LCD.Adafruit_CharLCD(27, 22, 25, 24, 23, 18, 16, 2, 4)
+lcd.clear()
+lcd.message('Hello World !!!')
+lcd.set_backlight(0)
 
-while True:
-	# Pause de 1 seconde pour laisser le temps au traitement de se faire
-	time.sleep(1)
-	#bus.write_block_data(address, 0x79, [0x7a, 0x65, 0x74, 0x6f, 0x66])
-	heartbeat()
+time.sleep(10)
+ap.modifyAlarmState(True, False)
+time.sleep(10)
+ap.modifyAlarmState(False, True)
+time.sleep(10)
+ap.modifyAlarmState(True, False)
+time.sleep(10)
+ap.modifyAlarmState(False, True)
+time.sleep(30)
+ap.modifyAlarmState(True, False)
+time.sleep(20)
+ap.stop()
