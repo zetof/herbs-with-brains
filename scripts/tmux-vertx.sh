@@ -1,7 +1,8 @@
 #!/bin/bash 
 tmux new-session -d
-tmux send-keys "cd ~/VERT-X/arduino/ard1" C-m
-tmux send-keys "vim src/runtime.ino" C-m
+tmux send-keys "sshpass -p "ktulu666" ssh -o StrictHostKeyChecking=no root@vertx" C-m
+tmux send-keys "cd arduino/ard1" C-m
+tmux send-keys "vim src/runtime.cpp" C-m
 tmux split-window -v
 tmux resize-pane -D 15
 tmux send-keys "sshpass -p "ktulu666" ssh -o StrictHostKeyChecking=no root@vertx" C-m
