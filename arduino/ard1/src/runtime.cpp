@@ -32,6 +32,18 @@
 #define AIR_TEMP_DELTA 1			// Différence par rapport aux maxima lors de l'action du feedback pour l'air du système
 
 
+void lcdBacklightInit();
+void checkBuzzerInhibit();
+void receiveI2C(int byteCount);
+void sendI2C();
+void sendByte(byte value);
+void sendInt(int value);
+void sendFloat(float value);
+int getLCDKey();
+void lcdBacklightOn();
+void lcdBacklightOff();
+void keepEventCounters();
+
 // Initialisation des variables globales
 //
 byte c_degree[8] = {							// Symbole des degrés pour l'écran LCD
