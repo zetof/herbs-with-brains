@@ -87,7 +87,7 @@ bool getProbesValues(){
 	airHumidity = dht.readHumidity();
 	Serial.print("Température: ");
 	Serial.println(airTemperature);
-	Serial.print("Température: ");
+	Serial.print("Humidité: ");
 	Serial.println(airHumidity);
 	return true;
 }

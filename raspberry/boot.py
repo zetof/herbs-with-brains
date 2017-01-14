@@ -33,6 +33,10 @@ LCD_NBR_COLS = 16
 ARD1_USB_PORT = '/dev/ard1'
 ARD1_USB_SPEED = 115200
 
+# Définition du callback lors de la réception d'un message venant d'un Arduino
+def processDataFromArduino(receivedData):
+	print(receivedData)
+
 # Initialisation du logging
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('vertx')
@@ -42,6 +46,9 @@ alarmPanel = AP.AlarmPanel(WARNING_GPIO, ALERT_GPIO, BUZZER_GPIO, INHIBIT_GPIO, 
 
 # Initialisation de la communication série avec les Arduinos
 arduino1 = USB.USBDaemon(ARD1_USB_PORT, ARD1_USB_SPEED)
+
+# Définition des callbacks lors de la réception des messages provenants des Arduinos
+arduino1.subscribe(processDataFromArduino)
 
 lcd = LCD.Adafruit_CharLCD(LCD_RS_GPIO, LCD_EN_GPIO, LCD_D4_GPIO, LCD_D5_GPIO, LCD_D6_GPIO, LCD_D7_GPIO, LCD_NBR_COLS, LCD_NBR_ROWS, LCD_BACK_GPIO)
 lcd.clear()

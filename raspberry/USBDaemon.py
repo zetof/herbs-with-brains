@@ -25,13 +25,24 @@ class USBDaemon:
 			# On ne lit que si des données sont présentes
 			if self.arduino.inWaiting() > 0:
 				self.messageReceived = self.arduino.readline().strip()
-				print(self.messageReceived)
+
+				# On envoie ce qui a été lu à tous les callbacks enregistrés
+				for fn in self.callbacks:
+					fn(self.messageReceived)
+
+			# Finalement, on reboucle pour continuer d'écouter le port USB jusqu'à la fin du programme
 			readTimer = threading.Timer(self.READ_TIME, self.__listenUSB)
 			readTimer.start()
+
+	# Méthode permettant d'enregistrer une fonction externe en callback de la réception d'un message
+	#
+	def subscribe(self, callback):
+		self.callbacks.append(callback)
 
 	# Méthode permettant d'arrêter de façon propre la classe par arrêt programmé des threads
 	#
 	def stop(self):
+		self.arduino.close()
 		self.running = False
 
 	# Constructeur de la classe. Ce constructeur prend en entrée les paramètres suivants:
@@ -44,6 +55,7 @@ class USBDaemon:
 		self.arduino = serial.Serial(serialName, serialSpeed)
 
 		# Création des variables de contôle de la classe
+		self.callbacks = []
 		self.messageReceived = None
 		self.running = True
 
