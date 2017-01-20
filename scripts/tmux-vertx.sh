@@ -20,6 +20,11 @@ tmux send-keys "sshpass -p "$2" ssh -o StrictHostKeyChecking=no root@$1" C-m
 tmux send-keys "cd raspberry" C-m
 tmux send-keys "vim boot.py" C-m
 tmux select-pane -t 0
+tmux split-window -v
+tmux send-keys "sshpass -p "$2" ssh -o StrictHostKeyChecking=no root@$1" C-m
+tmux send-keys "cd arduino/ard2" C-m
+tmux send-keys "vim src/runtime.cpp" C-m
+tmux select-pane -t 0
 tmux new-window "mocp"
 tmux select-window -t 0
 tmux -2 attach-session

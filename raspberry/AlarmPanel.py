@@ -3,6 +3,88 @@
 
 import RPi.GPIO as GPIO
 import threading
+import time
+import uuid
+
+# Classe permettant de définir une alarme. Cette alarme est utilisée afin de stocker un événement de type WARNING ou ALERT
+#
+class Alarm:
+
+	# Liste des constantes
+	#
+	WARNING = 'W'	# Valeur d'une alarme de type WARNING
+	ALERT = 'A'		# Valeur d'une alarme de type ALERT
+
+	# Constructeur de la classe
+	#
+	def __init__(self, aType, aMessage):
+
+		# Stocke tels quels les deux paramètres passés en entrée
+		self.aType = aType
+		self.aMessage = aMessage
+
+		# Stocke un identifiant unique pour cette alarme
+		self.aKey = uuid.uuid4()
+
+		# Stocke la date et l'heure de l'événement
+		self.aTime = time.strftime("%Y-%m-%d %H:%M:%S")
+
+# Classe permettant de stocker tous les WARNING et toutes les ALERT en cours
+#
+class AlarmArray:
+
+	# Méthode permettant d'ajouter un alarme de type WARNING à la liste des alarmes
+	#
+	def addWarning(self, aMessage):
+
+		# Préparation de l'alarme et ajout à la liste
+		alarm = Alarm(Alarm.WARNING, aMessage)
+		self.alarmArray.append(alarm)
+
+		# On renvoie à l'appelant la clé sauvegardée dans la list
+		return alarm.aKey
+
+	# Méthode permettant d'ajouter un alarme de type ALERT à la liste des alarmes
+	#
+	def addAlert(self, aMessage):
+
+		# Préparation de l'alarme et ajout à la liste
+		alarm = Alarm(Alarm.ALERT, aMessage)
+		self.alarmArray.append(alarm)
+
+		# On renvoie à l'appelant la clé sauvegardée dans la list
+		return alarm.aKey
+
+	# Méthode permettant de supprimer une entrée dans la liste des alarmes
+	#
+	def clearAlarm(self, aKey):
+		for index, alarm in enumerate(self.alarmArray):
+			if alarm.aKey == aKey:
+				del self.alarmArray[index]
+				break
+
+	# Méthode permettant de vérifier si au moins une alarme de type WARNING est présente dans la liste
+	#
+	def anyWarning(self):
+		if sum(alarm.aType == Alarm.WARNING for alarm in self.alarmArray) > 0:
+			return True
+		else:
+			return False
+
+	# Méthode permettant de vérifier si au moins une alarme de type ALERT est présente dans la liste
+	#
+	def anyAlert(self):
+		if sum(alarm.aType == Alarm.ALERT for alarm in self.alarmArray) > 0:
+			return True
+		else:
+			return False
+
+	# Constructeur de la classe
+	#
+	def __init__(self):
+
+		# Définition des propriétés de la classe
+		self.alarmArray = []
 
 # Classe permettant de piloter le panneau des alarmes de l'unité VERT-X
 # Ce panneau comprend:
@@ -74,9 +156,9 @@ class AlarmPanel:
 				# Dans les deux cas, le front haut doit générer un bip
 				# Si c'est un WARNING, on coupe le front bas, sinon, pour une ALERT, le son doit être continu donc
 				# également haut pour la partie normalement basse de l'astable
-				if self.warning ==True or self.alert == True:
+				if self.alarmList.anyWarning() == True or self.alarmList.anyAlert() == True:
 					highValue = 1
-				if self.alert == True:
+				if self.alarmList.anyAlert() == True:
 					lowValue = 1
 
 		# Génération proprement dite du son si nécessaire et reprogrammation du front suivant
@@ -113,23 +195,39 @@ class AlarmPanel:
 	def deactivateBuzzer(self):
 		self.buzzerEnabled = False
 
-	# Méthode permettant la génération de l'alarme sonore via le buzzer en prenant compte de tous les paramètres en cours
+	# Méthode permettant la génération d'une alarme de type WARNING
 	#
-	def modifyAlarmState(self, warning, alert):
+	def addWarning(self, message):
 
 		# Gestion de l'état des LEDs
-		if warning == True and self.warning == False:
-			GPIO.output(self.warningLED, 1)
-		if warning == False and self.warning == True:
+		GPIO.output(self.warningLED, 1)
+
+		# On ajoute une WARNING à la liste des alarmes et on retourne sa clé
+		return self.alarmList.addWarning(message)
+
+	# Méthode permettant la génération d'une alarme de type ALERT
+	#
+	def addAlert(self, message):
+
+		# Gestion de l'état des LEDs
+		GPIO.output(self.alertLED, 1)
+
+		# On ajoute une ALERT à la liste des alarmes et on retourne sa clé
+		return self.alarmList.addAlert(message)
+
+	# Méthode permettant la suppression d'une alarme
+	#
+	def clearAlarm(self, key):
+
+		# On retire l'alarme de la list, basée sur la clé passée
+		self.alarmList.clearAlarm(key)
+
+		# On rectifie l'état des LEDs si nécessaire
+		if self.alarmList.anyWarning() == False:
 			GPIO.output(self.warningLED, 0)
-		if alert == True and self.alert == False:
-			GPIO.output(self.alertLED, 1)
-		if alert == False and self.alert == True:
+		if self.alarmList.anyAlert() == False:
 			GPIO.output(self.alertLED, 0)
 
-		# On sauve l'état actuel des alarmes pour le prochain changement
-		self.warning = warning
-		self.alert = alert
 
 	# Constructeur de la classe. Ce constructeur prend en entrée les paramètres suivants:
 	#		* warningLED: le numéro du GPIO destiné à piloter la LED des WARNINGs
@@ -155,6 +253,7 @@ class AlarmPanel:
 		self.alert = False
 		self.inhibitRemaining = 0
 		self.running = True
+		self.alarmList = AlarmArray()
 
 		# Référence les GPIOs par leur numéro réel, pas par le numéro de pin
 		GPIO.setmode(GPIO.BCM)
