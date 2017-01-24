@@ -4,6 +4,7 @@
 import time
 import threading
 import serial
+import logging
 
 # Classe implémentant la communication série entre le Raspberry et les Arduinos sur un port USB
 #
@@ -22,10 +23,6 @@ class USBDaemon:
 	#
 	def __listenUSB(self):
 
-		# On initialise les variables portant les clés des éventuelles WARNING ou ALERT
-		warningKey = None
-		alertKey = None
-
 		# On ne reprogramme l'écoute du port USB que si le programme principal n'a pas demandé un arrêt général
 		if self.running == True:
 
@@ -34,15 +31,16 @@ class USBDaemon:
 				if self.arduino.inWaiting() > 0:
 					self.messageReceived = self.arduino.readline().strip()
 
-					# On appelle les callbacks
-					for fn in self.callbacks:
-						fn(self.messageReceived)
+					# On appelle le callback pour traitement du message
+					self.callback(self.messageReceived)
 
 			# On a un incident à la lecture du port USB
 			except IOError as e:
 
-				# On rapporte l'incident au système et on initialise la reconnexion
-				warningKey = self.warningCallback(e, True, False)
+				# On notifie par le callback qu'une erreur de lecture est survenue
+				self.callback(self.machineName + ':READ_WARNING')
+				
+				# On on initialise la reconnexion
 				reconnectCounter = 0
 				reconnected = False
 
@@ -52,11 +50,13 @@ class USBDaemon:
 
 					# Tentative de reconnexion - On ferme d'abord le port USB
 					# Si on y arrive, on le signale afin de sortir de la boucle
+					# Et on notifie le callback
 					try:
 						self.arduino.close()
 						time.sleep(self.RECONNECT_TIME)
 						self.__openUSB()
 						reconnected = True
+						self.callback(self.machineName + ':READ_ALERT:RESET')
 
 					# Echec à la tentative de reconnexion - On incrémente le compteur des essais
 					except serial.SerialException as e:
@@ -65,34 +65,14 @@ class USBDaemon:
 						# Si le nombre maximum de reconnexion est atteint, on rapporte l'incident en ALERT
 						if reconnectCounter == self.NBR_OF_RECONNECTIONS:
 
-							# On supprime le WARNING avant de passer en ALERT
-							self.clearAlarmCallback(warningKey, False)
-							warningKey = None
+							# On fait passer l'alarme au niveau ALERT en notifiant le callback 
+							self.callback(self.machineName + ':READ_ALERT:SET')
 
-							# Si l'alarme n'est pas encore en niveau ALERT, on le fait passer et on enclenche le panneau des alarmes
-							if alertKey == None:
-								alertKey = self.alertCallback(e, True, False)
-
-							# Sinon, on ne fait qu'enregistrer une nouvelle entrée dans le log
-							else:
-								alertKey = self.alertCallback(e, False, False)
-
-							# On réinitialise le compteur des essais pour relancer une tentative
-							reconnectCounter = 0
-
-			# Si on ressort d'une boucle de déconnexion, c'est qu'on a réussi à se reconnecter
-			# Il est donc nécessaire de supprimer l'ALERT avant de continuer
-			if warningKey != None:
-				self.clearAlarmCallback(warningKey, False)
-			elif alertKey != None:
-				self.clearAlarmCallback(alertKey, 'La communication sur le port USB a repris')
-				alertKey = None
-			
 			# Finalement, on reboucle pour continuer d'écouter le port USB jusqu'à la fin du programme
 			readTimer = threading.Timer(self.READ_TIME, self.__listenUSB)
 			readTimer.start()
 
-	# Méthode permettant la connexion au port USB
+	# Méthode permettant d'ouvrir la connexion au port USB
 	#
 	def __openUSB(self):
 
@@ -122,23 +102,21 @@ class USBDaemon:
 	#		* alertCallback: la fonction à exécuter en cas d'alarme de type ALERT
 	#		* clearAlarmCallback: la fonction à exécuter en cas de suppression d'une alarme en cours
 	#
-	def __init__(self, serialName, serialSpeed, warningCallback, alertCallback, clearAlarmCallback):
+	def __init__(self, machineName, serialName, serialSpeed, callback):
 
 		try:
 
 			# On sauvegarde les valeurs d'initialisation si on doit redémarrer la communication
 			# après une erreur survenue sur le port USV
+			self.machineName = machineName
 			self.serialName = serialName
 			self.serialSpeed = serialSpeed
-			self.warningCallback = warningCallback
-			self.alertCallback = alertCallback
-			self.clearAlarmCallback = clearAlarmCallback
+			self.callback = callback
 
 			# On essaie de créer l'objet de communication avec les valeurs d'initialisation
 			self.__openUSB();
 
 			# Création des variables de contôle de la classe
-			self.callbacks = []
 			self.messageReceived = None
 			self.running = True
 
