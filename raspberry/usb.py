@@ -38,7 +38,7 @@ class USBDaemon:
 			except IOError as e:
 
 				# On notifie par le callback qu'une erreur de lecture est survenue
-				self.callback(self.machineName + ':READ_WARNING')
+				self.callback(self.machineName + ':ARDUINO_READ_WARNING')
 				
 				# On on initialise la reconnexion
 				reconnectCounter = 0
@@ -56,7 +56,7 @@ class USBDaemon:
 						time.sleep(self.RECONNECT_TIME)
 						self.__openUSB()
 						reconnected = True
-						self.callback(self.machineName + ':READ_ALERT:RESET')
+						self.callback(self.machineName + ':ARDUINO_READ_ALERT:RESET')
 
 					# Echec à la tentative de reconnexion - On incrémente le compteur des essais
 					except serial.SerialException as e:
@@ -66,7 +66,7 @@ class USBDaemon:
 						if reconnectCounter == self.NBR_OF_RECONNECTIONS:
 
 							# On fait passer l'alarme au niveau ALERT en notifiant le callback 
-							self.callback(self.machineName + ':READ_ALERT:SET')
+							self.callback(self.machineName + ':ARDUINO_READ_ALERT:SET')
 
 			# Finalement, on reboucle pour continuer d'écouter le port USB jusqu'à la fin du programme
 			readTimer = threading.Timer(self.READ_TIME, self.__listenUSB)
@@ -79,6 +79,10 @@ class USBDaemon:
 		# On essaie de créer l'objet de communication avec les valeurs d'initialisation
 		try:
 			self.arduino = serial.Serial(self.serialName, self.serialSpeed)
+
+			# On supprime tout buffer pour être sûr de ne pas avoir de débris de communication
+			self.arduino.flushInput()
+			self.arduino.flushOutput()
 
 		# Si on n'y arrive pas, on remonte une exception
 		except serial.SerialException as e:

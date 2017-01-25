@@ -11,3 +11,4 @@ sshpass -p "$2" scp root@$1:/root/arduino/ard2/platformio.ini ../arduino/ard2/
 sshpass -p "$2" scp -r root@$1:/root/arduino/ard2/src ../arduino/ard2/
 sshpass -p "$2" scp -r root@$1:/root/arduino/ard2/lib ../arduino/ard2/
 sshpass -p "$2" scp root@$1:/root/raspberry/\{*.py,*.conf\} ../raspberry/
+sshpass -p "$2" scp -r root@$1:/root/raspberry/i18n ../raspberry/

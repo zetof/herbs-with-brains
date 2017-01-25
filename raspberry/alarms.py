@@ -9,34 +9,33 @@ class Alarms:
 
 	# Méthode permettant d'ajouter une alarme de façon générale
 	#
-	def addAlarm(self, aType, aMessage, aKey):
-
-		# Si on a reçu un identifiant, on vérifie qu'il n'existe pas encore dans la liste
-		# Si il existe, on supprime l'existant et on le remplace par l'événement le plus récent
-		if aKey != None:
-			for index, alarm in enumerate(self.alarms):
-				if alarm.aKey == aKey:
-					del self.alarms[index]
-					break
+	def addAlarm(self, aType, aAction, aMessage):
 
 		# Préparation de l'alarme et ajout à la liste
-		alarm = Alarm(aType, aMessage, aKey)
+		alarm = Alarm(aType, aAction, aMessage)
 		self.alarms.append(alarm)
 
 		# On renvoie à l'appelant la clé sauvegardée dans la list
 		return alarm.aKey
 	
-	# Méthode permettant de supprimer une entrée dans la liste des alarmes
+	# Méthode permettant de supprimer une entrée dans la liste des alarmes sur base de sa clé
 	# La méthode retourne le type de l'alarme précédemment enregistrée (WARNING ou ALERT)
 	#
-	def clearAlarm(self, aKey):
-		aType = None
+	def clearAlarmFromKey(self, aKey):
 		for index, alarm in enumerate(self.alarms):
 			if alarm.aKey == aKey:
 				aType = alarm.aType
 				del self.alarms[index]
 				break
-		return aType
+
+	# Méthode permettant de supprimer toutes les entrées dans la liste des alarmes sur base d'un type d'action
+	# On peut éventuellement entrer le type d'alarme à supprimer, par défaut tous les types sont supprimés
+	#
+	def clearAlarmFromAction(self, aAction):
+		for index, alarm in enumerate(self.alarms):
+			if alarm.aAction == aAction:
+				aType = alarm.aType
+				del self.alarms[index]
 
 	# Méthode permettant de vérifier si au moins une alarme de type WARNING est présente dans la liste
 	#

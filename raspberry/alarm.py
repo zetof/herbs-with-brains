@@ -16,24 +16,22 @@ class Alarm:
 	ALERT = logging.ERROR				# Valeur d'une alarme de type ALERT
 
 	# Constructeur de la classe
-	# Ce constructeur prend deux paramètres en entrée:
+	# Ce constructeur prend trois paramètres en entrée:
 	#		* aType: le type de l'alarme (WARNING ou ALERT)
+	#		* aAction: le type d'action ayant déclanché l'alarme
 	#		* aMessage: le texte descriptif de l'alarme
 	# Le constructeur ajoute une clé unique permettant d'identifier l'alarme
 	# ainsi qu'un timestamp afin de situer l'alarme dans le temps
 	#
-	def __init__(self, aType, aMessage, aKey):
+	def __init__(self, aType, aAction, aMessage):
 
 		# Stocke tels quels les deux paramètres passés en entrée
 		self.aType = aType
+		self.aAction = aAction
 		self.aMessage = aMessage
 
-		# Crée un identifiant unique pour cette alarme si on n'en a pas reçu
-		# Sinon, on stocke l'identifiant reçu
-		if aKey != None:
-			self.aKey = aKey
-		else:
-			self.aKey = uuid4()
-		print self.aKey
+		# Crée un identifiant unique pour cette alarme
+		self.aKey = uuid4()
+
 		# Stocke la date et l'heure de l'événement
 		self.aTime = strftime("%Y-%m-%d %H:%M:%S")

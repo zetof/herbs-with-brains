@@ -5,6 +5,7 @@ import logging
 import logging.config
 import time
 import serial
+from i18n import I18N
 from alarms import Alarms
 from lcd import LCDDisplay
 from alarmpanel import AlarmPanel
@@ -31,24 +32,34 @@ class Talk:
 	CONNECT_WAIT_TIME = 10	# Temps d'attente entre deux essais de connexion
 
 	# Méthode permettant de logger un message dans les fichiers de log
+	# Le type est l'un des types défini par la classe logging
+	# Le message est un tableau à une dimension []
+	#		- le premier élément contient le label du message à afficher après traduction par l'i18n
+	#		- les éléemnts suivants sont les éléments à substituer dans la phrase si nécessaire
 	#
 	def log(self, mType, message):
 
+		# Traduction du message
+		i18nMessage = self.i18n.t(message[0], message[1:])
+
 		# Log au niveau requis
 		if mType == logging.DEBUG:
-			self.logger.debug(message)
+			self.logger.debug(i18nMessage)
 		elif mType == self.INFO:
-			self.logger.info(message)
+			self.logger.info(i18nMessage)
 		elif mType == self.WARNING:
-			self.logger.warning(message)
+			self.logger.warning(i18nMessage)
 		elif mType == self.ERROR:
-			self.logger.error(message)
+			self.logger.error(i18nMessage)
 		elif mType == self.CRITICAL:
-			self.logger.critical(message)
+			self.logger.critical(i18nMessage)
 
 	# Méthode permettant l'ajout d'une alarme dans la liste des alarmes
 	#
-	def setAlarm(self, aType, aMessage, onPanel, aKey = None):
+	def setAlarm(self, aType, aAction, aMessage, onPanel):
+
+		# Au début, on n'a pas de clé d'alarme
+		aKey = None
 
 		# Dans tous les cas, si le message passé n'est pas égal à False, on enregistre le message dans les logs
 		if aMessage != False:
@@ -61,7 +72,7 @@ class Talk:
 				self.alarmPanel.setWarning()
 			elif aType == self.ERROR or aType == self.CRITICAL:
 				self.alarmPanel.setAlert()
-			aKey = self.alarms.addAlarm(aType, aMessage, aKey) 
+			aKey = self.alarms.addAlarm(aType, aAction, aMessage) 
 
 		# On retourne la référence de l'alarme enregistrée
 		return aKey
@@ -70,22 +81,23 @@ class Talk:
 	# La suppression se fait par la clé précédemment enregistrée
 	# A la suppression, on vérifie si on doit mettre à jour les flags d'alarme dans le panneau des alarmes
 	#
-	def resetAlarm(self, aKey, aMessage):
+	def resetAlarm(self, aMessage, aKey = None, aAction = None):
 
 		# Si le message est différent de False on l'enregistre dans les logs sous forme d'une INFO
 		if aMessage != False:
 			self.log(self.INFO, aMessage)
 
-		# On supprime l'alarme de la liste des alarmes et on récupère son type
-		aType = self.alarms.clearAlarm(aKey)
+		# On supprime l'alarme de la liste des alarmes suiant le type de données passée en paramètre
+		if aKey != None:
+			self.alarms.clearAlarmFromKey(aKey)
+		if aAction != None:
+			self.alarms.clearAlarmFromAction(aAction)
 
-		# Suivant le type de l'alarme supprimée, on vérifie si le panneau des alarmes est à jour
-		if aType == self.WARNING:
-			if not self.alarms.anyWarning():
-				self.alarmPanel.resetWarning()
-		elif aType == self.ERROR or self.CRITICAL:
-			if not self.alarms.anyAlert():
-				self.alarmPanel.resetAlert()
+		# On vérifie si le panneau des alarmes doit être mis à jour
+		if not self.alarms.anyWarning():
+			self.alarmPanel.resetWarning()
+		if not self.alarms.anyAlert():
+			self.alarmPanel.resetAlert()
 
 	# Méthode ajoutant un Arduino dans la liste des Arduinos à contacter
 	#
@@ -107,7 +119,7 @@ class Talk:
 				# A ce stade, la connexion est réussie
 				# Si nous avions une erreur de connexion auparavent, on la supprime
 				if alarm != None:
-					self.resetAlarm(alarm, 'Redémarrage OK')
+					self.resetAlarm(['info.usb.arduino.connect.ok', aName], aKey = alarm)
 
 			# Si on y arrive pas, on rapporte l'erreur et on boucle
 			except serial.SerialException as e:
@@ -116,7 +128,7 @@ class Talk:
 				# Si on a dépassé le nombre maximum d'essais, on continue d'essayer mais on envoie une ALARM
 				nbrOfTrials += 1
 				if nbrOfTrials == self.CONNECT_MAX_TRIALS:
-					alarm = self.setAlarm(self.ERROR, 'Impossible de se connecter à l\'Arduino: ' + aName, True)
+					alarm = self.setAlarm(self.ERROR, '', ['alert.usb.arduino.connect.ko', aName], True)
 
 				# On attend un instant avant de retenter
 				time.sleep(self.CONNECT_WAIT_TIME)
@@ -138,6 +150,9 @@ class Talk:
 		# Initialisation du logging
 		logging.config.fileConfig('logging.conf')
 		self.logger = logging.getLogger(loggerName)
+
+		# Initialisation du langage
+		self.i18n = I18N('fr-FR', 'language.cfg')
 
 		# Liste des alarmes en cours
 		self.alarms = Alarms()
