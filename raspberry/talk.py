@@ -10,6 +10,7 @@ from alarms import Alarms
 from lcd import LCDDisplay
 from alarmpanel import AlarmPanel
 from usb import USBDaemon
+from httpservices import HttpServices
 
 # Classe permettant de piloter tout type de communication dans l'unité VERT-X à savoir:
 #		* Le panneau des alarmes lumineuses et visuelles
@@ -145,7 +146,7 @@ class Talk:
 
 	# Constructeur de la classe
 	#
-	def __init__(self, loggerName):
+	def __init__(self, loggerName, vertxConnectURL, callback):
 
 		# Initialisation du logging
 		logging.config.fileConfig('logging.conf')
@@ -165,3 +166,6 @@ class Talk:
 
 		# Liste des Arduinos à contacter
 		self.arduinos = []
+
+		# Démarrage du serveur de commande et de la communication vers internet
+		self.httpServices = HttpServices(vertxConnectURL, callback)

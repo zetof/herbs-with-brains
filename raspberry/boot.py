@@ -4,8 +4,8 @@
 # Import des librairies
 import time
 import struct
-from usb import USBDaemon
 from talk import Talk
+from threading import Lock
 
 # Définition des propriétés de communication série avec les Arduinos
 ARD1 = 'ARD1'
@@ -14,11 +14,14 @@ ARD2 = 'ARD2'
 ARD2_PORT = '/dev/ttyUSB0'
 ARD_SPEED = 115200
 
+# Définition du lock pour la lecture des threads provenant des Arduinos
+aLock = Lock()
+
 # Fonction qui traite des problèmes de lecture sur le port USB d'un Arduino
 #
 def arduinoReadProblem(data):
 
-	# Raté à la lecture du bus USB venant d'un Arduino
+	# Raté ponctuel à la lecture du bus USB venant d'un Arduino
 	#
 	if data[1] == 'ARDUINO_READ_WARNING':
 		talk.setAlarm(talk.WARNING, data[0] + ':' + data[1], ['warning.usb.arduino.read.ko', data[0]], False)
@@ -54,21 +57,38 @@ def printData(data):
 #
 def processDataFromArduino(receivedData):
 
-	# On sépare les parties du message reçu
-	splitData = receivedData.split(':')
+	# On est dans une portion critique donc on lock
+	aLock.acquire()
+	try:
 
-	# On définit un dictionnaire pour le traitement des différents messages
-	action = {'ARDUINO_READ_WARNING':arduinoReadProblem,
-						'ARDUINO_READ_ALERT':arduinoReadProblem,
-						'KEY':processKey,
-						'AIR_TEMP':printData,
-						'AIR_HUM':printData}	
+		# On sépare les parties du message reçu
+		splitData = receivedData.split(':')
+
+		# On définit un dictionnaire pour le traitement des différents messages
+		action = {'ARDUINO_READ_WARNING':arduinoReadProblem,
+							'ARDUINO_READ_ALERT':arduinoReadProblem,
+							'KEY':processKey,
+							'AIR_TEMP':printData,
+							'AIR_HUM':printData}	
 	
-	# Finalement, on appelle la fonction correspondante à la commande sur base du dictionnaire
-	action[splitData[1]](splitData)
+		# Finalement, on appelle la fonction correspondante à la commande sur base du dictionnaire
+		action[splitData[1]](splitData)
+
+	# On quitte la portion critique donc on relache le lock
+	finally:
+		aLock.release()
+
+# Définition du callback lors de la réception d'un message venant d'internet
+# Ce callback prend en compte l'analyse des messages venant d'internet et
+# l'action associée
+#
+def processDataFromInternet(receivedData):
+
+	print receivedData
 
 # Initialisation de l'objet global de communication
-talk = Talk('vertx.logger')
+talk = Talk('vertx.logger', 'https://vertx.zetof.net/vertx', processDataFromInternet)
+
 
 # On connecte les Arduinos au Raspberry
 talk.addArduino(ARD1, ARD1_PORT, ARD_SPEED, processDataFromArduino)
