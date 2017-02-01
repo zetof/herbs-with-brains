@@ -3,6 +3,7 @@
 // Initialisation des #DEFINE
 //
 #define ARDUINO_NAME "ARD2"	// Nom de l'Arduino utilisé pour s'enregistrer à la connexion avec le Raspberry
+#define USB_SPEED 115200    // Vitesse de communication sur le port USB
 #define USB_MAX_LENGTH 50		// Longueur maximale d'une phrase à envoyer au Raspberry
 #define FLOAT_MAX_LENGTH 10	// Longueur maximale d'un réel à transformer en string par la fonction dtostfr
 #define DHT_PIN 2						// Entrée digitale sur laquelle est branchée la sonde DHT11 ou DHT22
@@ -10,9 +11,11 @@
 #define LED_RED_PIN 3				// GPIO qui commande la composante rouge des LEDs d'éclairage horticole (ce doit être une broche de type PWM 3, 5, 6, 10 ou 11)
 #define LED_GREEN_PIN 5			// GPIO qui commande la composante verte des LEDs d'éclairage horticole (ce doit être une broche de type PWM 3, 5, 6, 10 ou 11)
 #define LED_BLUE_PIN 6			// GPIO qui commande la composante bleue des LEDs d'éclairage horticole (ce doit être une broche de type PWM 3, 5, 6, 10 ou 11)
+#define RESET_PIN 7					// GPIO utilisée pour envoyer le signal de RESET de l'Arduino
 #define LOOP_DELAY 100			// Temps d'attente avant de rcommencer le processing de la boucle principale
 #define MEASURE_DELAY 10000	// Temps écoulé entre chaque prise de mesure des sondes
 
+void readSerial();																																// Procédure qui écoute le port série à la fréquence du LOOP_DELAY (à placer dans la boucle principale)
 void keepEventCounters();																													// Procédure qui dans la boucle principale déclenche les différents événements en fonction de leur programmation
 void sendUSBValue(const char* parameter, int value);															// Procédure d'envoi d'un paramètre de type entier contrôlé par l'unité au Raspberry Pi
 void sendUSBValue(const char* parameter, float value, int width, int precision);	// Procédure d'envoi d'un paramètre de type réel contrôlé par l'unité au Raspberry Pi
@@ -33,8 +36,12 @@ int blue = 0;
 //
 void setup(){
 
+	// Prépare la pin pour le reset de l'Arduino
+	pinMode(RESET_PIN, OUTPUT);
+	digitalWrite(RESET_PIN, LOW);
+
 	// Prépare la communication vers le Raspberry Pi via le bus USB
-	Serial.begin(115200);
+	Serial.begin(USB_SPEED);
 
 	// Prépare la communication avec la sonde de température / humidité
 	dht.begin();
@@ -44,22 +51,47 @@ void setup(){
 	pinMode(LED_GREEN_PIN, OUTPUT);
 	pinMode(LED_BLUE_PIN, OUTPUT);
 	analogWrite(LED_RED_PIN, 0);
-	analogWrite(LED_GREEN_PIN, 0);
+	analogWrite(LED_GREEN_PIN, 5);
 	analogWrite(LED_BLUE_PIN, 0);
+
 }
 
 // Boucle principale de régulation de l'unité hydroponique
 //
 void loop(){
 
-	// Initialise l'état des LEDs d'éclairage
-	analogWrite(LED_RED_PIN, red);
-	analogWrite(LED_GREEN_PIN, green);
-	analogWrite(LED_BLUE_PIN, blue);
-
 	// Les lignes qui suivent contiennent les actions qui sont exécutées à chaque itération
+	readSerial();
 	keepEventCounters();
 	delay(LOOP_DELAY);
+}
+
+// Ecoute le port série et analyse les messages reçus
+//
+void readSerial(){
+
+	// Initialise la commande à recevoir
+	// String data;
+
+	// Si il y a des données présentes sur le port série
+	if(Serial.available() > 0){
+
+		// On les lit (la fin est supposée toujours être délimitée par un "\n")
+		String readData = Serial.readStringUntil("\n");
+
+		// On analyse la commande et on effectue l'action correspondante
+		String command = readData.substring(0, readData.indexOf(':'));
+		if(command == "RGB"){
+			analogWrite(LED_BLUE_PIN, 255);
+			analogWrite(LED_GREEN_PIN, 0);
+		}
+		else if(command == "RESET"){
+			analogWrite(LED_GREEN_PIN, 0);
+			analogWrite(LED_RED_PIN, 255);
+			delay(1000);
+			digitalWrite(7, HIGH);
+		}
+	}
 }
 
 // Récolte les valeurs des différentes sondes connectées au système

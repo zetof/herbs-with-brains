@@ -44,7 +44,7 @@ class Talk:
 		i18nMessage = self.i18n.t(message[0], message[1:])
 
 		# Log au niveau requis
-		if mType == logging.DEBUG:
+		if mType == self.DEBUG:
 			self.logger.debug(i18nMessage)
 		elif mType == self.INFO:
 			self.logger.info(i18nMessage)
@@ -57,7 +57,7 @@ class Talk:
 
 	# Méthode permettant l'ajout d'une alarme dans la liste des alarmes
 	#
-	def setAlarm(self, aType, aAction, aMessage, onPanel):
+	def setAlarm(self, aType, aMessage, aAction = None):
 
 		# Au début, on n'a pas de clé d'alarme
 		aKey = None
@@ -66,14 +66,13 @@ class Talk:
 		if aMessage != False:
 			self.log(aType, aMessage)
 
-		# Si on doit afficher l'alarme sur le panneau des alarmes, on ajoute une alarme dans la liste
+		# Pour le panneau des alarmes, on ajoute une alarme dans la liste
 		# et on envoie une demande de notification au panneau des alarmes
-		if onPanel == True:
-			if aType == self.WARNING:
-				self.alarmPanel.setWarning()
-			elif aType == self.ERROR or aType == self.CRITICAL:
-				self.alarmPanel.setAlert()
-			aKey = self.alarms.addAlarm(aType, aAction, aMessage) 
+		if aType == self.WARNING:
+			self.alarmPanel.setWarning()
+		elif aType == self.ERROR or aType == self.CRITICAL:
+			self.alarmPanel.setAlert()
+		aKey = self.alarms.addAlarm(aType, aMessage, aAction) 
 
 		# On retourne la référence de l'alarme enregistrée
 		return aKey
@@ -129,10 +128,30 @@ class Talk:
 				# Si on a dépassé le nombre maximum d'essais, on continue d'essayer mais on envoie une ALARM
 				nbrOfTrials += 1
 				if nbrOfTrials == self.CONNECT_MAX_TRIALS:
-					alarm = self.setAlarm(self.ERROR, '', ['alert.usb.arduino.connect.ko', aName], True)
+					alarm = self.setAlarm(self.ERROR, ['alert.usb.arduino.connect.ko', aName])
 
 				# On attend un instant avant de retenter
 				time.sleep(self.CONNECT_WAIT_TIME)
+
+	# Méthode permettant d'envoyer une commande à un des Arduinos
+	#
+	def sendArduino(self,machineName, command, data):
+
+		# Formatte la commande à envoyer suivant les données passées en paramètres
+		string2Send = command + ':'
+		string2Send += ':'.join(str(val) for val in data) + '\n'
+
+		# On recherche l'Arduino demandé afin de lui envoyer la commande
+		for index, arduino in enumerate(self.arduinos):
+
+			# Si on a trouvé l'Arduino, on essaie d'envoyer la commande
+			if arduino.machineName == machineName:
+				try:
+					arduino.sendCommand(string2Send)
+
+				# Si on y arrive pas, on enregistre le problème et on remonte l'exception
+				except serial.SerialException as e:
+					raise e
 
 	# Méthode à appeler à l'arrêt général du programme afin de quitter tous les processus de façon contrôlée
 	#

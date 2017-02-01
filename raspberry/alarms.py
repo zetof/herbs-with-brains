@@ -9,10 +9,10 @@ class Alarms:
 
 	# Méthode permettant d'ajouter une alarme de façon générale
 	#
-	def addAlarm(self, aType, aAction, aMessage):
+	def addAlarm(self, aType, aMessage, aAction):
 
 		# Préparation de l'alarme et ajout à la liste
-		alarm = Alarm(aType, aAction, aMessage)
+		alarm = Alarm(aType, aMessage, aAction)
 		self.alarms.append(alarm)
 
 		# On renvoie à l'appelant la clé sauvegardée dans la list

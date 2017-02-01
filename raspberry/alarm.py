@@ -23,7 +23,7 @@ class Alarm:
 	# Le constructeur ajoute une clé unique permettant d'identifier l'alarme
 	# ainsi qu'un timestamp afin de situer l'alarme dans le temps
 	#
-	def __init__(self, aType, aAction, aMessage):
+	def __init__(self, aType, aMessage, aAction):
 
 		# Stocke tels quels les deux paramètres passés en entrée
 		self.aType = aType

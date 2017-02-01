@@ -3,6 +3,7 @@
 // Initialisation des #DEFINE
 //
 #define ARDUINO_NAME "ARD1"		// Nom de l'Arduino utilisé pour s'enregistrer à la connexion avec le Raspberry
+#define USB_SPEED 115200			// Vitesse de communication sur le port USB
 #define USB_MAX_LENGTH 20			// Longueur maximale d'une phrase à envoyer au Raspberry
 #define LCD_ANALOG_READ 0			// Entrée analogique à laquelle est connecté le mini clavier du LCD
 #define NO_KEY 900						// Valeur inférieure du LCD si aucune touche n'est pressée
@@ -34,7 +35,7 @@ int keyRepeat = 0;								// Temps entre deux événements de touche lorsque la 
 void setup(){
 
 	// Prépare la communication vers le Raspberry Pi via le bus USB
-	Serial.begin(115200);
+	Serial.begin(USB_SPEED);
 }
 
 // Boucle principale de régulation de l'unité hydroponique

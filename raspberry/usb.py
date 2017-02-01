@@ -87,11 +87,18 @@ class USBDaemon:
 		# Si on n'y arrive pas, on remonte une exception
 		except serial.SerialException as e:
 			raise e
-		
-	# Méthode permettant d'enregistrer une fonction externe en callback de la réception d'un message
+
+	# Méthode permettant d'envoyer une commande à l'Arduino
 	#
-	def subscribe(self, callback):
-		self.callbacks.append(callback)
+	def sendCommand(self, commandString):
+
+		# On essaie d'envoyer une commande via le port USB
+		try:
+			self.arduino.write(commandString)
+
+		# Si on n'y arrive pas, on lève une exception
+		except serial.SerialException as e:
+			raise e
 
 	# Méthode permettant d'arrêter de façon propre la classe par arrêt programmé des threads
 	#

@@ -4,6 +4,7 @@
 # Import des librairies
 import time
 import struct
+from serial import SerialException
 from talk import Talk
 from threading import Lock
 
@@ -24,7 +25,7 @@ def arduinoReadProblem(data):
 	# Raté ponctuel à la lecture du bus USB venant d'un Arduino
 	#
 	if data[1] == 'ARDUINO_READ_WARNING':
-		talk.setAlarm(talk.WARNING, data[0] + ':' + data[1], ['warning.usb.arduino.read.ko', data[0]], False)
+		talk.log(talk.WARNING, ['warning.usb.arduino.read.ko', data[0]])
 
 	# Déconnexion totale d'un Arduino
 	#
@@ -32,7 +33,7 @@ def arduinoReadProblem(data):
 
 		# Déconnexion - Première valeur du message = SET
 		if data[2] == 'SET':
-			talk.setAlarm(talk.CRITICAL, data[0] + ':' + data[1], ['alert.usb.arduino.read.ko', data[0]], True)
+			talk.setAlarm(talk.CRITICAL, ['alert.usb.arduino.read.ko', data[0]], aAction = data[0] + ':' + data[1])
 
 		# Reconnexion - Première valeur du message = RESET
 		elif data[2] == 'RESET':
@@ -57,7 +58,7 @@ def printData(data):
 #
 def processDataFromArduino(receivedData):
 
-	# On est dans une portion critique donc on lock
+	# On est dans une portion critique donc on s'approprie cette portion de programme
 	aLock.acquire()
 	try:
 
@@ -72,7 +73,13 @@ def processDataFromArduino(receivedData):
 							'AIR_HUM':printData}	
 	
 		# Finalement, on appelle la fonction correspondante à la commande sur base du dictionnaire
-		action[splitData[1]](splitData)
+		# Si la clé n'existe pas, il est nécessaire d'intercepter l'erreur pour éviter tout problème
+		# En cas de problème, on le reporte dans les logs
+		try:
+			action[splitData[1]](splitData)
+
+		except KeyError as e:
+			talk.log(Talk.WARNING, ['warning.usb.command.not.found', e, splitData[0]])
 
 	# On quitte la portion critique donc on relache le lock
 	finally:
@@ -89,13 +96,23 @@ def processDataFromInternet(receivedData):
 # Initialisation de l'objet global de communication
 talk = Talk('vertx.logger', 'https://vertx.zetof.net/vertx', processDataFromInternet)
 
-
 # On connecte les Arduinos au Raspberry
 talk.addArduino(ARD1, ARD1_PORT, ARD_SPEED, processDataFromArduino)
 talk.addArduino(ARD2, ARD2_PORT, ARD_SPEED, processDataFromArduino)
 
 # On fait tourner le programme un moment
-time.sleep(60)
+time.sleep(5)
+try:
+	talk.sendArduino(ARD2, 'RESET', [0])
+except SerialException as e:
+	talk.log(talk.WARNING, ['warning.usb.arduino.write.ko', ARD2])
+time.sleep(5)
+try:
+	talk.sendArduino(ARD2, 'RGB', [255, 0, 0])
+except SerialException as e:
+	talk.log(talk.WARNING, ['warning.usb.arduino.write.ko', ARD2])
+time.sleep(20)
 
 # On fait le ménage à la sortie de la boucle principale, avant d'aller faire dodo
 talk.stop()
+
