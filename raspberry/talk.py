@@ -165,14 +165,14 @@ class Talk:
 
 	# Constructeur de la classe
 	#
-	def __init__(self, loggerName, vertxConnectURL, callback):
+	def __init__(self, loggerName, locale, wsURL, wsUser, wsPwd, callback):
 
 		# Initialisation du logging
 		logging.config.fileConfig('logging.conf')
 		self.logger = logging.getLogger(loggerName)
 
 		# Initialisation du langage
-		self.i18n = I18N('fr-FR', 'language.cfg')
+		self.i18n = I18N(locale)
 
 		# Liste des alarmes en cours
 		self.alarms = Alarms()
@@ -187,4 +187,4 @@ class Talk:
 		self.arduinos = []
 
 		# Démarrage du serveur de commande et de la communication vers internet
-		self.httpServices = HttpServices(vertxConnectURL, callback)
+		self.httpServices = HttpServices(wsURL, wsUser, wsPwd, callback)

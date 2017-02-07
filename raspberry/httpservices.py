@@ -23,11 +23,13 @@ class HttpServices:
 		print r.text
 
 	# Constructeur de la classe
-	# Ce constructeur prend deux paramètres en entrée:
+	# Ce constructeur prend quatre paramètres en entrée:
 	#		* baseURL: l'url de base utilisée pour contacter la plate-forme VERT-X CONNECT
+	#		* user: l'utilisateur défini pour l'utilisation des services web
+	#		* password: le mot de passe défini pour l'utilisation des services web
 	#		* callback: la fonction utilisée dans le programme principal pour traiter les commandes venant d'internet
 	#
-	def __init__(self, baseURL, callback):
+	def __init__(self, baseURL, user, password, callback):
 
 		# Stocke tel quel le paramètre passé en entrée
 		self.baseURL = baseURL
@@ -68,5 +70,13 @@ class ProcessJSON:
 	# Pour les méthodes de type GET, cette méthode est déroulée
 	#
 	def GET(self):
-		web.callback('LO from the INTERNET!')
+
+		# Récupère les paramètres dans le requête
+		formData = web.input(command = None)
+
+		# Appelle le traitement de la demande
+		if formData.command != None:
+			web.callback('La commande passée est: %s %s' % (formData.command.encode('utf-8'), formData.r.encode('utf-8')))
+		else:
+			web.callback('LO from the INTERNET!')
 		return 'coucou !'

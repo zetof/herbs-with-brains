@@ -34,4 +34,4 @@ class Alarm:
 		self.aKey = uuid4()
 
 		# Stocke la date et l'heure de l'événement
-		self.aTime = strftime("%Y-%m-%d %H:%M:%S")
+		self.aTime = strftime('%Y-%m-%d %H:%M:%S')
